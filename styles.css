@@ -34,7 +34,7 @@
 }
 
 .tile.has-image {
-    background-image: url('./puzzle.jpg'); /* Make sure path is correct */
+    background-image: url('./puzzle.jpg'); /* Ensure the path is correct */
     background-size: 400px 300px;
 }
 
