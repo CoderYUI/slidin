@@ -42,6 +42,12 @@ class SlidingPuzzle {
         this.timerDisplay.textContent = '5:00';
         this.createBoard();
         this.startButton.style.display = 'block'; // Make sure start button is visible
+        this.board.classList.add('complete-state');
+        // Position the last tile (empty one) correctly
+        const lastTile = this.board.querySelector('.empty');
+        if (lastTile) {
+            lastTile.style.backgroundPosition = `-300px -200px`;
+        }
     }
 
     init() {
@@ -50,6 +56,7 @@ class SlidingPuzzle {
         this.moves = 0;
         this.updateMoves();
         this.startButton.style.display = 'none';
+        this.board.classList.remove('complete-state');
         this.shuffleBoard();
         this.startTimer();
     }
@@ -214,6 +221,13 @@ class SlidingPuzzle {
             this.setupInitialBoard(); // Reset to initial state instead of init()
             this.gameStarted = false;
             return;
+        }
+
+        // Show complete image
+        this.board.classList.add('complete-state');
+        const emptyTile = this.board.querySelector('.empty');
+        if (emptyTile) {
+            emptyTile.style.backgroundPosition = `-300px -200px`;
         }
 
         const timeData = {
