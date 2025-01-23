@@ -6,7 +6,8 @@ const app = express();
 app.use(express.static(__dirname));
 app.use(express.json());
 
-app.post('/save-time', (req, res) => {
+// Support both routes for development and production
+app.post(['/save-time', '/api/save-time'], (req, res) => {
     const filePath = path.join(__dirname, 'time.json');
     let times = [];
     

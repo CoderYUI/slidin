@@ -16,5 +16,14 @@
       "milliseconds": 341
     },
     "date": "2025-01-22T19:42:48.467Z"
+  },
+  {
+    "moves": 96,
+    "time": {
+      "minutes": 0,
+      "seconds": 50,
+      "milliseconds": 861
+    },
+    "date": "2025-01-23T16:45:22.801Z"
   }
 ]

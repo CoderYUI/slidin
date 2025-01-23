@@ -92,8 +92,19 @@ class SlidingPuzzle {
     }
 
     shuffle() {
-        for (let i = this.tiles.length - 1; i > 0; i--) {
+        // Calculate 95% of the total possible shuffles
+        const totalPositions = this.tiles.length - 1;
+        const shuffleCount = Math.floor(totalPositions * 0.95);
+        
+        for (let i = this.tiles.length - 1; i > (this.tiles.length - shuffleCount); i--) {
             const j = Math.floor(Math.random() * (i + 1));
+            
+            // Add 5% chance to skip the swap if tiles are in correct position
+            if (Math.random() < 0.05 && 
+                (this.tiles[i] === i + 1 || this.tiles[j] === j + 1)) {
+                continue;
+            }
+            
             [this.tiles[i], this.tiles[j]] = [this.tiles[j], this.tiles[i]];
         }
     }
@@ -193,7 +204,12 @@ class SlidingPuzzle {
 
     async saveTime(timeData) {
         try {
-            const response = await fetch('/api/save-time', {
+            // Use different endpoints for development and production
+            const endpoint = window.location.hostname === 'localhost' 
+                ? '/save-time'  // For local development
+                : '/api/save-time';  // For Vercel production
+
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
