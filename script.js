@@ -85,56 +85,58 @@ class SlidingPuzzle {
     }
 
     shuffle() {
-        // Maximum number of moves to shuffle (reduced for easier puzzles)
-        const maxShuffles = 20;
-        
-        // Keep track of the empty tile position
+        // Increase shuffles for moderate difficulty (30-35 moves optimal solution)
+        const maxShuffles = 35;
         let emptyIndex = this.tiles.indexOf(0);
+        let lastMove = null;
         
-        // Perform limited random moves
         for (let i = 0; i < maxShuffles; i++) {
-            // Find possible moves
             const possibleMoves = [];
             const emptyPos = this.getPosition(emptyIndex);
             
-            // Check all four directions
+            // Define possible directions
             const directions = [
-                {row: -1, col: 0}, // up
-                {row: 1, col: 0},  // down
-                {row: 0, col: -1}, // left
-                {row: 0, col: 1}   // right
+                {row: -1, col: 0, opposite: 'down'}, // up
+                {row: 1, col: 0, opposite: 'up'},    // down
+                {row: 0, col: -1, opposite: 'right'},// left
+                {row: 0, col: 1, opposite: 'left'}   // right
             ];
             
             for (const dir of directions) {
                 const newRow = emptyPos.row + dir.row;
                 const newCol = emptyPos.col + dir.col;
                 
-                // Check if the new position is within bounds
                 if (newRow >= 0 && newRow < this.rows && 
                     newCol >= 0 && newCol < this.cols) {
-                    const newIndex = newRow * this.cols + newCol;
-                    possibleMoves.push(newIndex);
+                    // Avoid immediate backtracking
+                    if (lastMove !== dir.opposite) {
+                        possibleMoves.push({
+                            index: newRow * this.cols + newCol,
+                            direction: dir
+                        });
+                    }
                 }
             }
             
-            // Select a random valid move
-            const newEmptyIndex = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+            // Select a move that maintains moderate difficulty
+            const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+            if (!move) continue;
             
-            // Swap tiles
-            this.tiles[emptyIndex] = this.tiles[newEmptyIndex];
-            this.tiles[newEmptyIndex] = 0;
-            emptyIndex = newEmptyIndex;
+            // Update last move and perform the swap
+            lastMove = move.direction.opposite;
+            this.tiles[emptyIndex] = this.tiles[move.index];
+            this.tiles[move.index] = 0;
+            emptyIndex = move.index;
         }
     }
 
     shuffleBoard() {
         let attempts = 0;
-        const maxAttempts = 5;
+        const maxAttempts = 10;
 
         do {
             this.shuffle();
             attempts++;
-            // If we can't find a good shuffle after maxAttempts, use the last one
             if (attempts >= maxAttempts) break;
         } while (!this.isSolvable() || this.isTooDifficult());
 
@@ -143,13 +145,28 @@ class SlidingPuzzle {
 
     isTooDifficult() {
         let outOfPlaceCount = 0;
+        let manhattanDistance = 0;
+        
         for (let i = 0; i < this.tiles.length; i++) {
-            if (this.tiles[i] !== 0 && this.tiles[i] !== i + 1) {
-                outOfPlaceCount++;
+            if (this.tiles[i] !== 0) {
+                const currentPos = this.getPosition(i);
+                const correctPos = this.getPosition(this.tiles[i] - 1);
+                
+                manhattanDistance += Math.abs(currentPos.row - correctPos.row) + 
+                                   Math.abs(currentPos.col - correctPos.col);
+                
+                if (this.tiles[i] !== i + 1) {
+                    outOfPlaceCount++;
+                }
             }
         }
-        // Consider the puzzle too difficult if more than 60% of tiles are out of place
-        return outOfPlaceCount > (this.size * 0.6);
+        
+        // Moderate difficulty criteria:
+        // - Manhattan distance should be between 25-45 moves
+        // - 40-60% of tiles should be out of place
+        return manhattanDistance < 25 || manhattanDistance > 45 ||
+               outOfPlaceCount < (this.size * 0.4) || 
+               outOfPlaceCount > (this.size * 0.6);
     }
 
     getPosition(index) {
