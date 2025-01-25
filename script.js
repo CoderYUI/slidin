@@ -84,29 +84,72 @@ class SlidingPuzzle {
         });
     }
 
+    shuffle() {
+        // Maximum number of moves to shuffle (reduced for easier puzzles)
+        const maxShuffles = 20;
+        
+        // Keep track of the empty tile position
+        let emptyIndex = this.tiles.indexOf(0);
+        
+        // Perform limited random moves
+        for (let i = 0; i < maxShuffles; i++) {
+            // Find possible moves
+            const possibleMoves = [];
+            const emptyPos = this.getPosition(emptyIndex);
+            
+            // Check all four directions
+            const directions = [
+                {row: -1, col: 0}, // up
+                {row: 1, col: 0},  // down
+                {row: 0, col: -1}, // left
+                {row: 0, col: 1}   // right
+            ];
+            
+            for (const dir of directions) {
+                const newRow = emptyPos.row + dir.row;
+                const newCol = emptyPos.col + dir.col;
+                
+                // Check if the new position is within bounds
+                if (newRow >= 0 && newRow < this.rows && 
+                    newCol >= 0 && newCol < this.cols) {
+                    const newIndex = newRow * this.cols + newCol;
+                    possibleMoves.push(newIndex);
+                }
+            }
+            
+            // Select a random valid move
+            const newEmptyIndex = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+            
+            // Swap tiles
+            this.tiles[emptyIndex] = this.tiles[newEmptyIndex];
+            this.tiles[newEmptyIndex] = 0;
+            emptyIndex = newEmptyIndex;
+        }
+    }
+
     shuffleBoard() {
+        let attempts = 0;
+        const maxAttempts = 5;
+
         do {
             this.shuffle();
-        } while (!this.isSolvable());
+            attempts++;
+            // If we can't find a good shuffle after maxAttempts, use the last one
+            if (attempts >= maxAttempts) break;
+        } while (!this.isSolvable() || this.isTooDifficult());
+
         this.createBoard();
     }
 
-    shuffle() {
-        // Calculate 95% of the total possible shuffles
-        const totalPositions = this.tiles.length - 1;
-        const shuffleCount = Math.floor(totalPositions * 0.95);
-        
-        for (let i = this.tiles.length - 1; i > (this.tiles.length - shuffleCount); i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            
-            // Add 5% chance to skip the swap if tiles are in correct position
-            if (Math.random() < 0.05 && 
-                (this.tiles[i] === i + 1 || this.tiles[j] === j + 1)) {
-                continue;
+    isTooDifficult() {
+        let outOfPlaceCount = 0;
+        for (let i = 0; i < this.tiles.length; i++) {
+            if (this.tiles[i] !== 0 && this.tiles[i] !== i + 1) {
+                outOfPlaceCount++;
             }
-            
-            [this.tiles[i], this.tiles[j]] = [this.tiles[j], this.tiles[i]];
         }
+        // Consider the puzzle too difficult if more than 60% of tiles are out of place
+        return outOfPlaceCount > (this.size * 0.6);
     }
 
     getPosition(index) {
