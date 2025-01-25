@@ -184,39 +184,85 @@ class SlidingPuzzle {
 
     moveTile(clickedTile) {
         if (!this.gameStarted) return;
-        const tileValue = parseInt(clickedTile.dataset.value);
-        const tileIndex = this.tiles.indexOf(tileValue);
-        const emptyIndex = this.tiles.indexOf(0);
+        
+        try {
+            const tileValue = parseInt(clickedTile.dataset.value);
+            const tileIndex = this.tiles.indexOf(tileValue);
+            const emptyIndex = this.tiles.indexOf(0);
 
-        if (this.isAdjacent(tileIndex, emptyIndex)) {
-            clickedTile.style.transition = 'transform 0.1s';
-            this.tiles[emptyIndex] = tileValue;
-            this.tiles[tileIndex] = 0;
-            this.createBoard();
-            this.moves++;
-            this.updateMoves();
+            if (this.isAdjacent(tileIndex, emptyIndex)) {
+                // Add transition for smooth movement
+                clickedTile.style.transition = 'transform 0.2s ease-in-out';
+                
+                // Perform the move
+                this.tiles[emptyIndex] = tileValue;
+                this.tiles[tileIndex] = 0;
+                
+                // Update the board with animation
+                requestAnimationFrame(() => {
+                    this.createBoard();
+                    this.moves++;
+                    this.updateMoves();
 
-            if (this.isSolved()) {
-                setTimeout(() => {
-                    this.handleWin();
-                }, 300);
+                    if (this.isSolved()) {
+                        setTimeout(() => {
+                            this.handleWin();
+                        }, 300);
+                    }
+                });
             }
+        } catch (error) {
+            console.error('Error moving tile:', error);
+            // Fallback: refresh the board
+            this.createBoard();
         }
     }
 
     setupEventListeners() {
+        // Mouse events
         this.board.addEventListener('click', (e) => {
+            this.handleInteraction(e);
+        });
+
+        // Touch events
+        this.board.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Prevent scrolling
+            const touch = e.touches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (element) {
+                this.handleInteraction({ target: element });
+            }
+        }, { passive: false });
+
+        // Handle both touch and mouse events
+        this.handleInteraction = (e) => {
             const tile = e.target.closest('.tile');
             if (tile && !tile.classList.contains('empty') && this.gameStarted) {
+                // Add visual feedback
+                tile.style.opacity = '0.8';
+                setTimeout(() => {
+                    tile.style.opacity = '1';
+                }, 100);
+                
                 this.moveTile(tile);
             }
-        });
+        };
 
         this.startButton.addEventListener('click', () => {
             this.init();
         });
-        
-        // Remove the shuffle button event listener since we removed the button
+
+        // Prevent unwanted gestures
+        this.board.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+
+        // Fix for iOS devices
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.closest('#board')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
     }
 
     isSolvable() {
